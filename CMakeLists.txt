@@ -43,15 +43,12 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Add sources to executable
-# Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
     App/Comm/Src/uart_driver.c
     App/Comm/Src/i2c_driver.c
     App/Comm/Src/spi_driver.c
     App/Comm/Src/adc_driver.c
     App/Comm/Src/timer_encoder_driver.c
-
     App/Sensors/Src/imu_lsm6ds3.c
     App/Sensors/Src/encoders.c
     App/Sensors/Src/ina226.c
@@ -59,20 +56,18 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Sensors/Src/mlx90614.c
     App/Sensors/Src/vl53l0x.c
     App/Sensors/Src/mq2.c
-
     App/Logic/Src/fire_state_machine.c
     App/Logic/Src/motion_validator.c
-
     App/Protocol/Src/packet.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
     App/Comm/Inc
     App/Sensors/Inc
     App/Logic/Inc
     App/Protocol/Inc
+    app/Comm/Inc
 )
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
