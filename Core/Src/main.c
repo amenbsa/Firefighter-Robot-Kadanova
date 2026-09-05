@@ -18,6 +18,25 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
+#include "dma.h"
+#include "i2c.h"
+#include "tim.h"
+#include "usart.h"
+#include "gpio.h"
+#include "adc_driver.h"
+#include "i2c_driver.h"
+#include "uart_driver.h"
+#include "adt7482.h"
+#include "encoders.h"
+#include "fire_state_machine.h"
+#include "imu_lsm6ds3.h"
+#include "ina226.h"
+#include "mlx90614.h"
+#include "mq2.h"
+#include "motion_validator.h"
+#include "packet.h"
+#include "vl53l0x.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -42,12 +61,13 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+static uint8_t status_frame[PACKET_MAX_FRAME];
+static uint32_t last_status_tick;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -86,6 +106,21 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
+  UART_Driver_Init();
+  I2C_Driver_Init();
+  ADC_Driver_Init();
+
+  Encoders_Init();
+  IMU_Init();
+  INA226_Init();
+  ADT7482_Init();
+  MLX90614_Init();
+  VL53L0X_Init();
+  MQ2_Init();
+
+  FireStateMachine_Init();
+  MotionValidator_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -94,8 +129,31 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
- HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-HAL_Delay(500);
+    FireState fire_state = FireStateMachine_Update();
+    MotionStatus motion_status = MotionValidator_Check(0);
+
+    if (HAL_GetTick() - last_status_tick >= 1000U)
+    {
+      uint8_t payload[3] = {
+          (uint8_t)fire_state,
+          (uint8_t)motion_status,
+          UART_Driver_IsLinkAlive()
+      };
+      uint8_t frame_length = Packet_Encode(MSG_SENSOR_DATA, payload, sizeof(payload), status_frame);
+
+      if (frame_length > 0U)
+      {
+        UART_Driver_Send(status_frame, frame_length);
+      }
+
+      HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+      last_status_tick = HAL_GetTick();
+    }
+
+    HAL_Delay(10);
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
@@ -139,36 +197,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  /* USER CODE BEGIN MX_GPIO_Init_1 */
-
-  /* USER CODE END MX_GPIO_Init_1 */
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : PA5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_5;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /* USER CODE BEGIN MX_GPIO_Init_2 */
-
-  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
