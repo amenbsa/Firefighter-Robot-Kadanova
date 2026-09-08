@@ -1,5 +1,5 @@
 [README.md](https://github.com/user-attachments/files/31870708/README.md)
-# Firefighter Robot — STM32 Embedded Firmware
+# Project K-01 — STM32 Embedded Firmware
 
 Embedded firmware for the firefighter robot developed at Kadanova (industrial robotics, IoT, and AI startup). This repository contains the STM32F407VGT6 firmware layer, responsible for real-time sensor acquisition, safety logic, and communication with the ESP32 relay and Raspberry Pi 4 main processing unit.
 
